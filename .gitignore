@@ -6,3 +6,5 @@ doc/*
 .ipynb_checkpoints
 *.png
 
+.Rproj.user
+build

@@ -60,7 +60,7 @@ class ParametricMM():
         n_cn_params = self.cn_comp.n_params
         n_ad_params = self.ad_comp.n_params
         cn_theta = theta[:n_cn_params]
-        ad_theta = theta[n_cn_params:n_cn_params+n_ad_params]
+        ad_theta = theta[n_cn_params:n_cn_params + n_ad_params]
         mixture = theta[-1]
 
         self.cn_comp.set_theta(cn_theta)

@@ -25,8 +25,8 @@ def mixture_model_grid(X, y, mixtures,
         score_names = ['BM{}'.format(x+1) for x in range(n_biomarkers)]
     if class_names is None:
         class_names = ['CN', 'AD']
-    n_x = np.round(np.sqrt(n_biomarkers)).astype(int)
-    n_y = np.ceil(np.sqrt(n_biomarkers)).astype(int)
+    n_x = np.round(np.sqrt(n_biomarkers)).astype(int) # getting the number of columns in grid (trying to keep a square grid, hence sqrt)
+    n_y = np.ceil(np.sqrt(n_biomarkers)).astype(int) # getting the number of rows in grid (trying to keep a square-ish grid)
     hist_c = colors[:2]
     fig, ax = plt.subplots(n_y, n_x, figsize=(12, 12))
     for i in range(n_biomarkers):

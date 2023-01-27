@@ -14,7 +14,7 @@ class KDEMM(object):
         self.controls_kde = None
         self.patholog_kde = None
         self.mixture = None
-        self.alpha = 0.3
+        self.alpha = 0.3 # this is the bandwidth parameter
         self.beta = self.alpha # alpha for controls # sensitivity parameter: 0...1
 
     def fit(self, X, y, implement_fixed_controls=False, patholog_dirn=None, outlier_controls_quantile = 0.90):
@@ -216,6 +216,8 @@ class KDEMM(object):
         data_likelihood = np.log(data_likelihood)
         return -1*np.sum(data_likelihood)
 
+
+    # actually gives the joint probability of X and group membership
     def pdf(self, X, **kwargs):
         #* Old version: sklearn fixed-bw KDE
         # controls_score = self.controls_kde.score_samples(X)

@@ -48,8 +48,8 @@ def fit_all_gmm_models(X, y, fit_all_subjects=False, implement_fixed_controls=Fa
     for i in range(n_biomarkers):
         bio_y = y[~np.isnan(X[:, i])]
         bio_X = X[~np.isnan(X[:, i]), i]
-        cn_comp = Gaussian()
-        ad_comp = Gaussian()
+        cn_comp = Gaussian() # control distribution
+        ad_comp = Gaussian() # alzheimers disease (case) distribution
         mm = ParametricMM(cn_comp, ad_comp)
         mm.fit(bio_X, bio_y)
         mixture_models.append(mm)
