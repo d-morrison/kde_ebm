@@ -92,11 +92,11 @@ class KDEMM(object):
             if patholog_dirn<0:
                 #* More normal (greater) than half the controls: CDF_controls > 0.5
                 labels_forced_normal_cdf = cdf_controls > 0.5
-                labels_forced_normal_alt = kde_values > np.median(kde_values[kde_labels0 == 0])
+                labels_forced_normal_alt = kde_values > np.nanmedian(kde_values[kde_labels0 == 0])
             elif patholog_dirn>0:
                 #* More normal (less)    than half the controls: CDF_controls < 0.5
                 labels_forced_normal_cdf = cdf_controls < 0.5
-                labels_forced_normal_alt = kde_values < np.median(kde_values[kde_labels0 == 0])
+                labels_forced_normal_alt = kde_values < np.nanmedian(kde_values[kde_labels0 == 0])
             labels_forced_normal = labels_forced_normal_cdf
             
             #* FIXME: Make this a prior and change the mixture modelling to be Bayesian
@@ -131,11 +131,11 @@ class KDEMM(object):
                 if patholog_dirn<0:
                     #* More normal (greater) than half the controls: CDF_controls > 0.5
                     labels_forced_normal_cdf = cdf_controls > 0.5
-                    labels_forced_normal_alt = kde_values > np.median(kde_values[kde_labels0 == 0])
+                    labels_forced_normal_alt = kde_values > np.nanmedian(kde_values[kde_labels0 == 0])
                 elif patholog_dirn>0:
                     #* More normal (less)    than half the controls: CDF_controls < 0.5
                     labels_forced_normal_cdf = cdf_controls < 0.5
-                    labels_forced_normal_alt = kde_values < np.median(kde_values[kde_labels0 == 0])
+                    labels_forced_normal_alt = kde_values < np.nanmedian(kde_values[kde_labels0 == 0])
                 labels_forced_normal = labels_forced_normal_cdf
             
             if(np.all(ratio == old_ratios)):
@@ -249,7 +249,7 @@ class KDEMM(object):
             likelihood_abs_diff = np.abs(p_x_given_notE - p_x_given_E) # BEWARE: minimum diff might be at edges => use d^2 (diff) / dx^2 > 0
             likelihood_abs_diff_d2 = np.gradient(np.gradient(likelihood_abs_diff))
             central_minimum = np.where(likelihood_abs_diff_d2==np.max(likelihood_abs_diff_d2))[0]
-            x_missing = x[ np.median(central_minimum).astype(int) ] # handles multiple x (takes median)
+            x_missing = x[ np.nanmedian(central_minimum).astype(int) ] # handles multiple x (takes median)
             # Impute
             missing_entries = np.isnan(X)
             X_imputed = np.copy(X)
