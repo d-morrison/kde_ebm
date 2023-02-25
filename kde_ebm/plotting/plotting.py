@@ -19,14 +19,21 @@ def greedy_ascent_trace(greedy_dict):
 
 
 def mixture_model_grid(X, y, mixtures,
-                       score_names=None, class_names=None, hist_align='left'):
+                       score_names=None, class_names=None, hist_align='left',
+                       max_rows = np.Inf,
+                       max_cols = 3,
+                       ):
     n_particp, n_biomarkers = X.shape
     if score_names is None:
         score_names = ['BM{}'.format(x+1) for x in range(n_biomarkers)]
     if class_names is None:
         class_names = ['CN', 'AD']
-    n_x = np.round(np.sqrt(n_biomarkers)).astype(int) # getting the number of columns in grid (trying to keep a square grid, hence sqrt)
-    n_y = np.ceil(np.sqrt(n_biomarkers)).astype(int) # getting the number of rows in grid (trying to keep a square-ish grid)
+    
+    # getting the number of columns in grid (trying to keep a square grid, hence sqrt):
+    n_x = min(max_cols,
+              np.round(np.sqrt(n_biomarkers)).astype(int))
+    
+    n_y = np.ceil(n_biomarkers/n_x).astype(int) # getting the number of rows in grid
     hist_c = colors[:2]
     fig, ax = plt.subplots(n_y, n_x, figsize=(12, 12))
     for i in range(n_biomarkers):
@@ -117,8 +124,8 @@ def mcmc_uncert_mat(mcmc_samples, ml_order=None, score_names=None):
     ax.set_xticklabels(labs, rotation=0)
     tick_marks_y = np.arange(n_biomarkers)
     ax.set_yticks(tick_marks_y+0.2)
-    trimmed_scores = [x[2:].replace('_', ' ') if x.startswith('p_')
-                      else x.replace('_', ' ') for x in score_names]
+    trimmed_scores = [x[2:].replace('_', ' ') if x.startswith('p_') # remove the "p_" prefix if present
+                      else x.replace('_', ' ') for x in score_names] 
     ax.set_yticklabels(np.array(trimmed_scores, dtype='object')[ml_order],
                        rotation=30, ha='right',
                        rotation_mode='anchor')

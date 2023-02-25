@@ -28,7 +28,10 @@ def greedy_ascent_creation(prob_mat, n_iter=1000, n_init=10):
     return starts_dict
 
 
-def mcmc(X, mixture_models, n_iter=10000, greedy_n_iter=1000,
+def mcmc(X, 
+        mixture_models, 
+        n_iter=10000, 
+        greedy_n_iter=1000,
          greedy_n_init=10, plot=True):
     prob_mat = get_prob_mat(X, mixture_models)
     greedy_dict = greedy_ascent_creation(prob_mat,
@@ -43,7 +46,7 @@ def mcmc(X, mixture_models, n_iter=10000, greedy_n_iter=1000,
         if new_order > current_order:
             current_order = new_order
     mcmc_samples = [current_order]
-    pbar = tqdm(total=n_iter)
+    pbar = tqdm(total=n_iter) # initialize progress bar
     pbar.update(1)
     for i in range(1, n_iter):
         new_order = current_order.swap_events()

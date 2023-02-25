@@ -56,7 +56,17 @@ def fit_all_gmm_models(X, y, fit_all_subjects=False, implement_fixed_controls=Fa
     return mixture_models
 
 
-def fit_all_kde_models(X, y, implement_fixed_controls=False, patholog_dirn_array=None, outlier_controls_quantile = 0.9):
+def fit_all_kde_models(
+        X, 
+        y, 
+        implement_fixed_controls=False, 
+        patholog_dirn_array=None, 
+        outlier_controls_quantile = 0.9,
+        verbose = False):
+
+
+    if(verbose):
+        print("starting `fit_all_kde_models()`")    
     #* Extract only the first two diagnoses
     msk = np.where(y<2)[0]
     X = X[msk]
@@ -65,6 +75,8 @@ def fit_all_kde_models(X, y, implement_fixed_controls=False, patholog_dirn_array
     n_particp, n_biomarkers = X.shape
     kde_mixtures = []
     for i in range(n_biomarkers):
+        if(verbose):
+            print("Starting to model biomarker #", i+1)
         patholog_dirn = patholog_dirn_array[i] if patholog_dirn_array is not None else None
         bio_X = X[:, i]
         bio_y = y[~np.isnan(bio_X)]
@@ -75,6 +87,12 @@ def fit_all_kde_models(X, y, implement_fixed_controls=False, patholog_dirn_array
         #     )
         # )
         kde = KDEMM()
-        kde.fit(bio_X, bio_y,implement_fixed_controls=implement_fixed_controls, patholog_dirn=patholog_dirn,outlier_controls_quantile=outlier_controls_quantile)
+        kde.fit(
+            bio_X, 
+            bio_y,
+            implement_fixed_controls=implement_fixed_controls, 
+            patholog_dirn=patholog_dirn,
+            outlier_controls_quantile=outlier_controls_quantile,
+            verbose = verbose)
         kde_mixtures.append(kde)
     return kde_mixtures

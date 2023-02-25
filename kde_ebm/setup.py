@@ -11,6 +11,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('mcmc')
     config.add_subpackage('mixture_model')
     config.add_subpackage('plotting')
+    config.add_subpackage('staging')
 
     # submodules which have their own setup.py
     config.add_subpackage('datasets')

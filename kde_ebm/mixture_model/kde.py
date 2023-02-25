@@ -17,7 +17,20 @@ class KDEMM(object):
         self.alpha = 0.3 # this is the bandwidth parameter
         self.beta = self.alpha # alpha for controls # sensitivity parameter: 0...1
 
-    def fit(self, X, y, implement_fixed_controls=False, patholog_dirn=None, outlier_controls_quantile = 0.90):
+    def fit(
+            self, 
+            X, 
+            y, 
+            implement_fixed_controls=False, 
+            patholog_dirn=None, 
+            outlier_controls_quantile = 0.90,
+            verbose = False):
+        
+        if(verbose):
+            print("starting `KDEMM.fit()`")
+            print("patholog_dirn = ", patholog_dirn)
+            
+        
         #* Requires direction of disease progression as input
         if patholog_dirn is None:
             patholog_dirn = disease_direction(X,y)
@@ -35,7 +48,8 @@ class KDEMM(object):
         kde_values = X.copy()[sorted_idx].reshape(-1,1)
         kde_labels0 = y.copy()[sorted_idx]
         kde_labels = kde_labels0
-        
+        # if(verbose):
+        #     print("reached here")
         #print('Original labels')
         #print(kde_labels.astype(int))
         
@@ -44,6 +58,7 @@ class KDEMM(object):
         mixture = mixture0
         old_ratios = np.zeros(kde_labels.shape)
         iter_count = 0
+        
         if(self.bandwidth is None):
             #* 1. Rule of thumb
             self.bandwidth = hscott(X)
@@ -56,30 +71,31 @@ class KDEMM(object):
             # g = stats.mstats.gmean(f)
             # alpha = 0.5 # sensitivity parameter: 0...1
             # lamb = np.power(f/g,-alpha)
+
         for i in range(self.n_iters):
-            
-            # print('Iteration {0}. kde_labels = {1}'.format(i,[int(k) for k in kde_labels]))
+            if(verbose):
+                print('Iteration {0}. kde_labels = {1}'.format(i,[int(k) for k in kde_labels]))
             
             #* Automatic variable/local bandwidth for each component: awkde package from github
             controls_kde = GaussianKDE(glob_bw="scott", alpha=self.beta, diag_cov=False)
             patholog_kde = GaussianKDE(glob_bw="scott", alpha=self.alpha, diag_cov=False)
             # controls_kde = GaussianKDE(glob_bw="scott", alpha=0.1, diag_cov=False)
             # patholog_kde = GaussianKDE(glob_bw="scott", alpha=0.1, diag_cov=False)
-            controls_kde.fit(kde_values[kde_labels == 0])
-            patholog_kde.fit(kde_values[kde_labels == 1])
+            controls_kde.fit(kde_values[kde_labels == 0], verbose = verbose, debug_info = "controls")
+            patholog_kde.fit(kde_values[kde_labels == 1], verbose = verbose, debug_info = "cases")
 
-            controls_score = controls_kde.predict(kde_values)
-            patholog_score = patholog_kde.predict(kde_values)
+            controls_score = controls_kde.predict(kde_values, verbose = verbose)
+            patholog_score = patholog_kde.predict(kde_values, verbose = verbose)
             
-            controls_score = controls_score*mixture
+            controls_score = controls_score*mixture # DM: `mixture` factor gets canceled out of `cdf_controls`
             patholog_score = patholog_score*(1-mixture)
 
-            ratio = controls_score / (controls_score + patholog_score)
+            ratio = controls_score / (controls_score + patholog_score) # DM: doesn't seem to get used
             
             # print('Iteration {0}. ratio (percent) = {1}'.format(i,[int(r*100) for r in ratio]))
             
             #* Empirical cumulative distribution: used to swap labels for patients with super-normal values (greater/less than CDF=0.5)
-            cdf_controls = np.cumsum(controls_score)/max(np.cumsum(controls_score))
+            cdf_controls = np.cumsum(controls_score)/max(np.cumsum(controls_score)) # DM: this is why we needed to sort; note controls_score is joint likelihood p(x, ~E)
             cdf_patholog = np.cumsum(patholog_score)/max(np.cumsum(patholog_score))
             cdf_diff = (cdf_patholog - cdf_controls)/(cdf_patholog + cdf_controls)
             disease_dirn = -np.sign(np.nansum(cdf_diff)) # disease_dirn = -np.sign(np.mean(cdf_diff))
@@ -89,30 +105,35 @@ class KDEMM(object):
                 cdf_direction = -cdf_diff
             
             #* Identify "normal" biomarkers as being on the healthy side of the controls median => flip patient labels
-            if patholog_dirn<0:
+            if patholog_dirn < 0:
                 #* More normal (greater) than half the controls: CDF_controls > 0.5
                 labels_forced_normal_cdf = cdf_controls > 0.5
-                labels_forced_normal_alt = kde_values > np.nanmedian(kde_values[kde_labels0 == 0])
+                labels_forced_normal_alt = kde_values > np.nanmedian(kde_values[kde_labels0 == 0]) # DM: apparently not used
             elif patholog_dirn>0:
                 #* More normal (less)    than half the controls: CDF_controls < 0.5
                 labels_forced_normal_cdf = cdf_controls < 0.5
                 labels_forced_normal_alt = kde_values < np.nanmedian(kde_values[kde_labels0 == 0])
             labels_forced_normal = labels_forced_normal_cdf
             
+            if(verbose):
+                print("labels_forced_normal = ")
+                print(labels_forced_normal)
             #* FIXME: Make this a prior and change the mixture modelling to be Bayesian
             #* First iteration only: implement "prior" that flips healthy-looking patients (before median for controls) to pre-event label
             #* Refit the KDEs at this point
             if i==0:
+                if(verbose):
+                    print("in first iteration special step")
                 #* Disease direction: force pre-event/healthy-looking patients to flip
                 kde_labels[np.where(labels_forced_normal)[0]] = 0
                 
                 bin_counts = np.bincount(kde_labels).astype(float)
                 mixture = bin_counts[0] / bin_counts.sum()
                 #* Refit the KDE components. FIXME: this is copy-and-paste from above. Reimplement in a smarter way.
-                controls_kde.fit(kde_values[kde_labels == 0])
-                patholog_kde.fit(kde_values[kde_labels == 1])
-                controls_score = controls_kde.predict(kde_values)
-                patholog_score = patholog_kde.predict(kde_values)
+                controls_kde.fit(kde_values[kde_labels == 0], verbose=verbose, debug_info = "controls")
+                patholog_kde.fit(kde_values[kde_labels == 1], verbose=verbose, debug_info = "cases")
+                controls_score = controls_kde.predict(kde_values, verbose=verbose)
+                patholog_score = patholog_kde.predict(kde_values, verbose=verbose)
                 controls_score = controls_score*mixture
                 patholog_score = patholog_score*(1-mixture)
                 ratio = controls_score / (controls_score + patholog_score)
@@ -138,6 +159,9 @@ class KDEMM(object):
                     labels_forced_normal_alt = kde_values < np.nanmedian(kde_values[kde_labels0 == 0])
                 labels_forced_normal = labels_forced_normal_cdf
             
+            if(verbose):
+                print('after first iteration special step')
+
             if(np.all(ratio == old_ratios)):
                 # print('MM finished in {0} iterations'.format(iter_count))
                 break
