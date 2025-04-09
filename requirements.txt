@@ -5,3 +5,4 @@ matplotlib>=2.0.1
 tqdm
 awkde @ git+https://github.com/noxtoby/awkde
 scikit-learn
+wheel
